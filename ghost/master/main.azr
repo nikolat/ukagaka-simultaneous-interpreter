@@ -148,7 +148,7 @@ string OnOtherGhostTalk(dict ref)
 }
 TH_Translate(string talk)
 {
-	talk = _regex_replace(talk, "\\\\_{0,2}[a-zA-Z0-9*!&](\d|\[(\"([^\"]|\\\\\")+?\"|([^\]]|\\\\\\])+?)+?\])?", "");
+	talk = _regex_replace(talk, "\\\\_{0,2}[a-zA-Z0-9*!&-](\\d|\\[(\"([^\"]|\\\\\")+?\"|([^\\]]|\\\\\\])+?)+?\\])?", "");
 	if (talk == "")
 		return;
 	//https://qiita.com/satto_sann/items/be4177360a0bc3691fdf
