@@ -1,4 +1,16 @@
 //******************************************************************************
+// load/unload
+//******************************************************************************
+load()
+{
+	_saoriload("saori\httpc\httpc.dll", "httpc");
+}
+unload()
+{
+	_saoriunload("httpc");
+}
+
+//******************************************************************************
 // global variables
 //******************************************************************************
 string translate_ghost = "";
@@ -132,6 +144,7 @@ string OnOtherGhostTalk(dict ref)
 		return "";
 	string talk = ref["Reference4"];
 	_create_thread("TH_Translate", talk);
+	return "";
 }
 TH_Translate(string talk)
 {
@@ -141,7 +154,9 @@ TH_Translate(string talk)
 	//https://qiita.com/satto_sann/items/be4177360a0bc3691fdf
 	string baseurl = "https://script.google.com/macros/s/AKfycbzZtvOvf14TaMdRIYzocRcf3mktzGgXvlFvyczo/";
 	string url = baseurl + "exec?text=" + _urlencode(talk, "utf8") + "&source=" + translate_source + "&target=" + translate_target;
-	array a = _httpget(url, "utf8");
+	array a = httpget(url, "utf8");
+	if (_aryvn(a) == 0)
+		return;
 	dict d = _json2azv(a);
 	if (d["code"] != "200")
 		return;
@@ -199,4 +214,17 @@ string escapeAllTags(string s)
 	s = _strreplace(s, ESCAPE_TAG_2, "\\%");
 	s = _strreplace(s, ESCAPE_TAG_1, "\\\\");
 	return s;
+}
+
+//******************************************************************************
+// SAORI
+//******************************************************************************
+array httpget(string url, string charset)
+{
+	if (!(int)_saorirequest("httpc")["Result"])
+		return {};
+	dict d = _saorirequest("httpc", url, "tmp.txt");
+	array a = _readtext("saori\httpc\tmp.txt", charset);
+	int r = _fdelete("saori\httpc\tmp.txt");
+	return a;
 }
