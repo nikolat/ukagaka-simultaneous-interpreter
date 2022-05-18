@@ -1,0 +1,4 @@
+charset,UTF-8
+type,ghost
+name,simultaneous-interpreter
+directory,simultaneous-interpreter

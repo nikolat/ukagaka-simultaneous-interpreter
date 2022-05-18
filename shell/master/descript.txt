@@ -1,0 +1,7 @@
+charset,UTF-8
+type,shell
+name,master
+craftman,mk
+craftmanurl,http://shell.vs.land.to/iom/
+readme.charset,UTF-8
+seriko.alignmenttodesktop,free
