@@ -137,7 +137,9 @@ string OnOtherGhostTalk(dict ref)
 		return "";
 	string event = ref["Reference3"];
 	array hookevent = {
-		"OnSecondChange", "OnMinuteChange", "OnMouseDoubleClick", "OnMouseMove", "OnChoiceSelect",
+		"OnBoot", "OnFirstBoot", "OnUserInput", "OnUserInputCancel", "OnSurfaceRestore",
+		"OnSecondChange", "OnMinuteChange", "OnMouseDoubleClick", "OnMouseMove",
+		"OnChoiceSelect", "OnChoiceSelectEx", "OnAnchorSelect", "OnAnchorSelectEx",
 		"OnCommunicate", "OnGhostChanging", "OnGhostChanged", "OnClose", "OnGhostCallComplete",
 		"OnOtherGhostBooted", "OnOtherGhostClosed", "OnGhostCalled", "OnOtherGhostChanged"};
 	if (ASEARCH(event, hookevent) == -1)
