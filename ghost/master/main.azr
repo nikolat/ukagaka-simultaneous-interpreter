@@ -85,46 +85,64 @@ string Menu_Open()
 		names += name;
 	}
 	string s = "";
+	s += "========================================\n";
 	s += "ghost: " + escapeAllTags(translate_ghost) + "\n\n";
 	for (int i = 0; names[i] != nil; i++) {
-		s += "\![*]\__q[SelectGhost," + escapeText(names[i]) + "]" + escapeAllTags(names[i]) + "\__q\n";
+		if (names[i] == translate_ghost)
+			s += "\![*]\f[color,disable]" + escapeAllTags(names[i]) + "\f[color,default]\n";
+		else
+			s += "\![*]\__q[SelectGhost," + escapeText(names[i]) + "]" + escapeAllTags(names[i]) + "\__q\n";
 	}
-	s += "\![*]\__q[SelectGhost,]none\__q\n\n";
+	s += "\n\![*]\__q[SelectGhost,]clear\__q\n\n";
+	s += "========================================\n";
 	s += "source: " + translate_source + "\n\n";
 	for (int i = 0; languages[i] != nil; i++) {
-		s += "\![*]\__q[SelectSource," + languages[i] + "]" + languages[i] + "\__q ";
+		if (languages[i] == translate_source)
+			s += "\![*]\f[color,disable]" + languages[i] + "\f[color,default] ";
+		else
+			s += "\![*]\__q[SelectSource," + languages[i] + "]" + languages[i] + "\__q ";
 	}
-	s += "\n\ntarget: " + translate_target + "\n\n";
+	s += "\n\n";
+	s += "========================================\n";
+	s += "target: " + translate_target + "\n\n";
 	for (int i = 0; languages[i] != nil; i++) {
-		s += "\![*]\__q[SelectTarget," + languages[i] + "]" + languages[i] + "\__q ";
+		if (languages[i] == translate_target)
+			s += "\![*]\f[color,disable]" + languages[i] + "\f[color,default] ";
+		else
+			s += "\![*]\__q[SelectTarget," + languages[i] + "]" + languages[i] + "\__q ";
 	}
-	s += "\n\n\![*]\__q[Menu_CANCEL]close\__q";
+	s += "\n\n";
+	s += "========================================\n";
+	s += "\![*]\__q[Menu_CANCEL]close\__q";
 	return "\0\b[2]\_q" + s;
 }
 string SelectGhost(dict ref)
 {
 	string ghost = ref["Reference2"];//sakura.name
 	translate_ghost = ghost;
-	string v = "true";
-	if (ghost == "")
-		v = "false";
-	return "\![set,otherghosttalk," + v + "]" + Menu_Open() + "\e";
+	return "\![set,otherghosttalk," + GetOtherghosttalkValue() + "]" + Menu_Open() + "\e";
 }
 string SelectSource(dict ref)
 {
 	string source = ref["Reference2"];
 	translate_source = source;
-	return Menu_Open() + "\e";
+	return "\![set,otherghosttalk," + GetOtherghosttalkValue() + "]" + Menu_Open() + "\e";
 }
 string SelectTarget(dict ref)
 {
 	string target = ref["Reference2"];
 	translate_target = target;
-	return Menu_Open() + "\e";
+	return "\![set,otherghosttalk," + GetOtherghosttalkValue() + "]" + Menu_Open() + "\e";
 }
 string Menu_CANCEL(dict ref)
 {
 	return "\e";
+}
+string GetOtherghosttalkValue()
+{
+	if (translate_ghost != "" && translate_source != translate_target)
+		return "true";
+	return "false";
 }
 
 //******************************************************************************
