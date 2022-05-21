@@ -135,24 +135,15 @@ string OnOtherGhostTalk(dict ref)
 	string ghost = ref["Reference1"];
 	if (translate_ghost != ghost)
 		return "";
-	string event = ref["Reference3"];
-	array hookevent = {
-		"OnBoot", "OnFirstBoot", "OnUserInput", "OnUserInputCancel", "OnSurfaceRestore",
-		"OnSecondChange", "OnMinuteChange", "OnMouseDoubleClick", "OnMouseMove",
-		"OnChoiceSelect", "OnChoiceSelectEx", "OnAnchorSelect", "OnAnchorSelectEx",
-		"OnCommunicate", "OnGhostChanging", "OnGhostChanged", "OnClose", "OnGhostCallComplete",
-		"OnOtherGhostBooted", "OnOtherGhostClosed", "OnGhostCalled", "OnOtherGhostChanged"};
-	if (ASEARCH(event, hookevent) == -1)
-		return "";
 	string talk = ref["Reference4"];
+	talk = _regex_replace(talk, "\\\\_{0,2}[a-zA-Z0-9*!&\\-+](\\d|\\[(\"([^\"]|\\\\\")+?\"|([^\\]]|\\\\\\])+?)+?\\])?", "");
+	if (talk == "")
+		return;
 	_create_thread("TH_Translate", talk);
 	return "";
 }
 TH_Translate(string talk)
 {
-	talk = _regex_replace(talk, "\\\\_{0,2}[a-zA-Z0-9*!&\\-+](\\d|\\[(\"([^\"]|\\\\\")+?\"|([^\\]]|\\\\\\])+?)+?\\])?", "");
-	if (talk == "")
-		return;
 	//https://qiita.com/satto_sann/items/be4177360a0bc3691fdf
 	string baseurl = "https://script.google.com/macros/s/AKfycbzZtvOvf14TaMdRIYzocRcf3mktzGgXvlFvyczo/";
 	string url = baseurl + "exec?text=" + _urlencode(talk, "utf8") + "&source=" + translate_source + "&target=" + translate_target;
