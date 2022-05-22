@@ -4,10 +4,12 @@
 load()
 {
 	_saoriload("saori\httpc\httpc.dll", "httpc");
+	_saoriload("saori\yaya\yaya.dll", "yaya");
 }
 unload()
 {
 	_saoriunload("httpc");
+	_saoriunload("yaya");
 }
 
 //******************************************************************************
@@ -74,14 +76,13 @@ string OnMouseDoubleClick(dict ref)
 string Menu_Open()
 {
 	array languages = {"en", "ja", "zh-CN", "zh-TW", "ko", "de", "ru"};//free to add more
-	array fmo = _getfmo();
+	array fmo = getfmo();
 	array names = {};
 	for (int i = 0; fmo[i] != nil; i++) {
-		if (_strstr(fmo[i], ".ghostpath" + _bytechar(1)) == -1)
+		if (_strstr(fmo[i], ".name" + _bytechar(1)) == -1)
 			continue;
-		string ghostpath = _strsplit(fmo[i], ".ghostpath" + _bytechar(1))[1];
-		string name = ReadFromDescriptTxt(ghostpath + "ghost\master\descript.txt", "sakura.name");
-		if (name == "" || name == _systemdict["OnNotifySelfInfo"]["Reference1"])
+		string name = _strsplit(fmo[i], ".name" + _bytechar(1))[1];
+		if (name == _systemdict["OnNotifySelfInfo"]["Reference1"])
 			continue;
 		names += name;
 	}
@@ -227,48 +228,6 @@ string escapeAllTags(string s)
 	s = _strreplace(s, ESCAPE_TAG_1, "\\\\");
 	return s;
 }
-string ReadFromDescriptTxt(string path, string item)
-{
-	array a = _readtext(path, "utf8");
-	string charset = "";
-	for (int i = 0; a[i] != nil; i++) {
-		string k = _zen2han(CUTSPACE(_strsplit(a[i], ",")[0]));
-		int n = _strstr(a[i], ",");
-		string v = CUTSPACE(_substr(a[i], n + 1, _strlen(a[i]) - n - 1));
-		if (k == "charset") {
-			if (v == "Shift_JIS") {
-				charset = "sjis";
-				break;
-			}
-			else if (v == "UTF-8") {
-				continue;
-			}
-			else {
-				charset = "auto";
-				break;
-			}
-		}
-		else if (k == item) {
-			return v;
-		}
-	}
-	if (charset == "")
-		return "";
-	a = _readtext(path, charset);
-	for (int i = 0; a[i] != nil; i++) {
-		string k = _zen2han(CUTSPACE(_strsplit(a[i], ",")[0]));
-		int n = _strstr(a[i], ",");
-		string v = CUTSPACE(_substr(a[i], n + 1, _strlen(a[i]) - n - 1));
-		if (k == item) {
-			return v;
-		}
-	}
-	return "";
-}
-string CUTSPACE(string s)
-{
-	return _regex_replace(s, "^\s+|\s+$", "");
-}
 
 //******************************************************************************
 // SAORI
@@ -280,5 +239,16 @@ array httpget(string url, string charset)
 	dict d = _saorirequest("httpc", url, "tmp.txt");
 	array a = _readtext("saori\httpc\tmp.txt", charset);
 	int r = _fdelete("saori\httpc\tmp.txt");
+	return a;
+}
+
+array getfmo()
+{
+	string name = "SakuraUnicode";
+	string charset = "UTF-8";
+	string path = _abspath("saori\yaya\tmp.txt");
+	dict d = _saorirequest("yaya", "SaveFMO", name, charset, path);
+	array a = _readtext(path, "utf8");
+	int n = _fdelete(path);
 	return a;
 }

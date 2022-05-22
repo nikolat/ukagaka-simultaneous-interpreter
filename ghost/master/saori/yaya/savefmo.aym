@@ -1,0 +1,24 @@
+SaveFMO
+{
+	_r = ''
+	if REQ.ARGS[0] == '' {
+		_r = READFMO()
+	}
+	elseif REQ.ARGS[1] == '' {
+		_r = READFMO(REQ.ARGS[0])
+	}
+	else {
+		_r = READFMO(REQ.ARGS[0], REQ.ARGS[1])
+	}
+	_a = SPLIT(_r, CHR(0xd)+CHR(0xa))
+	_path = REQ.ARGS[2]
+	FCHARSET('UTF-8')
+	if !FOPEN(_path, 'w')
+		return
+	for _i = 0; _i < ARRAYSIZE(_a); _i++ {
+		if _a[_i] != '' {
+			FWRITE(_path, _a[_i])
+		}
+	}
+	FCLOSE(_path)
+}
