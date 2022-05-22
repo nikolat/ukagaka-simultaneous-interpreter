@@ -143,7 +143,7 @@ string Menu_CANCEL(dict ref)
 string GetOtherghosttalkValue()
 {
 	if (translate_ghost != "" && translate_source != translate_target)
-		return "true";
+		return "before";
 	return "false";
 }
 
@@ -174,7 +174,7 @@ TH_Translate(string talk)
 	if (d["code"] != "200")
 		return;
 	string s = d["text"];
-	_speak("\0\_q" + escapeAllTags(s));
+	_speak("\0" + escapeAllTags(s));
 }
 
 //******************************************************************************
