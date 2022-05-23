@@ -33,10 +33,10 @@ string OnClose()              { return "\-\e"; }
 //******************************************************************************
 // update event
 //******************************************************************************
-string OnUpdateBegin()            { return "\0\s[0]\_qUpdate Begin.\_q\e"; }
-string OnUpdateReady()            { return "\0\s[0]\_qUpdating...\_q\e"; }
-string OnUpdateComplete(dict ref) { return "\0\s[0]\_q" + escapeAllTags(ref["Reference0"]) + ".\_q\e"; }
-string OnUpdateFailure(dict ref)  { return "\0\s[0]\_q" + escapeAllTags(ref["Reference0"]) + ".\_q\e"; }
+string OnUpdateBegin()            { return "\0\_qUpdate Begin.\e"; }
+string OnUpdateReady()            { return "\0\_qUpdating...\e"; }
+string OnUpdateComplete(dict ref) { return "\0\_q" + escapeAllTags(ref["Reference0"]) + ".\e"; }
+string OnUpdateFailure(dict ref)  { return "\0\_q" + escapeAllTags(ref["Reference0"]) + ".\e"; }
 
 //******************************************************************************
 // network update
@@ -120,7 +120,7 @@ string Menu_Open()
 }
 string SelectGhost(dict ref)
 {
-	string ghost = ref["Reference2"];//sakura.name
+	string ghost = ref["Reference2"];
 	translate_ghost = ghost;
 	return "\![set,otherghosttalk," + GetOtherghosttalkValue() + "]" + Menu_Open() + "\e";
 }
@@ -240,7 +240,7 @@ array httpget(string url, string charset)
 	string path = "saori\httpc\\" + filename;
 	dict d = _saorirequest("httpc", url, filename);
 	array a = _readtext(path, charset);
-	int r = _fdelete(path);
+	int n = _fdelete(path);
 	return a;
 }
 array getfmo()
