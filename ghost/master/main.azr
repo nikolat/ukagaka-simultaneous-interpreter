@@ -35,8 +35,8 @@ string OnClose()              { return "\-\e"; }
 //******************************************************************************
 string OnUpdateBegin()            { return "\0\s[0]\_qUpdate Begin.\_q\e"; }
 string OnUpdateReady()            { return "\0\s[0]\_qUpdating...\_q\e"; }
-string OnUpdateComplete(dict ref) { return "\0\s[0]\_q" + ref["Reference0"] + ".\_q\e"; }
-string OnUpdateFailure(dict ref)  { return "\0\s[0]\_q" + ref["Reference0"] + ".\_q\e"; }
+string OnUpdateComplete(dict ref) { return "\0\s[0]\_q" + escapeAllTags(ref["Reference0"]) + ".\_q\e"; }
+string OnUpdateFailure(dict ref)  { return "\0\s[0]\_q" + escapeAllTags(ref["Reference0"]) + ".\_q\e"; }
 
 //******************************************************************************
 // network update
@@ -158,7 +158,7 @@ string OnOtherGhostTalk(dict ref)
 	string talk = ref["Reference4"];
 	talk = _regex_replace(talk, "\\\\_{0,2}[a-zA-Z0-9*!&\\-+](\\d|\\[(\"([^\"]|\\\\\")+?\"|([^\\]]|\\\\\\])+?)+?\\])?", "");
 	if (talk == "")
-		return;
+		return "";
 	_create_thread("TH_Translate", talk);
 	return "";
 }
@@ -186,7 +186,7 @@ string OnKeyPress(dict ref)
 }
 string key_r(dict ref)
 {
-	return "\![reload,shiori]\0\s[0]\_qReloaded.\_q\e";
+	return "\![reload,shiori]\0\_qReloaded.\e";
 }
 string OnChoiceSelect(dict ref)
 {
@@ -236,18 +236,19 @@ array httpget(string url, string charset)
 {
 	if (!(int)_saorirequest("httpc")["Result"])
 		return {};
-	dict d = _saorirequest("httpc", url, "tmp.txt");
-	array a = _readtext("saori\httpc\tmp.txt", charset);
-	int r = _fdelete("saori\httpc\tmp.txt");
+	string filename = "tmp.txt";
+	string path = "saori\httpc\\" + filename;
+	dict d = _saorirequest("httpc", url, filename);
+	array a = _readtext(path, charset);
+	int r = _fdelete(path);
 	return a;
 }
-
 array getfmo()
 {
-	string name = "SakuraUnicode";
+	string fmoname = "SakuraUnicode";
 	string charset = "UTF-8";
 	string path = _abspath("saori\yaya\tmp.txt");
-	dict d = _saorirequest("yaya", "SaveFMO", name, charset, path);
+	dict d = _saorirequest("yaya", "SaveFMO", fmoname, charset, path);
 	array a = _readtext(path, "utf8");
 	int n = _fdelete(path);
 	return a;
