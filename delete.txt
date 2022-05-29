@@ -1,0 +1,6 @@
+ghost\master\saori\yaya\messagetxt\classical-chinese.txt
+ghost\master\saori\yaya\messagetxt\english.txt
+ghost\master\saori\yaya\messagetxt\japanese.txt
+ghost\master\saori\yaya\messagetxt\simplified-chinese.txt
+ghost\master\saori\yaya\messagetxt\traditional-chinese.txt
+ghost\master\saori\yaya\messagetxt\
