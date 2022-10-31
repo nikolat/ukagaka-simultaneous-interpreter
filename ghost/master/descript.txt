@@ -1,0 +1,11 @@
+charset,UTF-8
+type,ghost
+shiori,akari.dll
+name,simultaneous-interpreter
+sakura.name,ancient-tablet
+kero.name,none
+craftman,Don
+craftmanurl,https://nikolat.github.io/
+homeurl,https://raw.githubusercontent.com/nikolat/ukagaka-simultaneous-interpreter/main/
+don't need onmousemove,1
+readme.charset,UTF-8

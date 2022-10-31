@@ -1,0 +1,225 @@
+// https://gist.github.com/nikolat/1007538
+// yaya.dll設定
+#globaldefine AYAINFO_VERSION	0
+#globaldefine AYAINFO_CHARSET	1
+#globaldefine AYAINFO_PATH		2
+
+#define PROTOCOL_VERSION	'1.0'				/* SAORIプロトコルバージョン */
+#define PROTOCOL_SENDER		'AYASAORI'			/* Sender */
+#define CRLF	CHR(0xd)+CHR(0xa)				/* 改行コード */
+
+#define FUNC_UNDEFIND	0
+#define FUNC_USER		1
+#define FUNC_BUILTIN	2
+
+#globaldefine STATUS_OK							'200 OK'
+#globaldefine STATUS_NO_CONTENT					'204 No Content'
+#globaldefine STATUS_BAD_REQUEST				'400 Bad Request'
+#globaldefine STATUS_INTERNAL_SERVER_ERROR		'500 Internal Server Error'
+
+/**	AYA API load
+ *	初期化
+ *
+ *	@param	string	_argv[0] ライブラリのディレクトリパス
+ */
+load
+{
+	AYASAORI.PATH      = _argv[0]
+	AYASAORI.LOADEDCLS = IARRAY()
+	AYASAORI.VERSION   = PROTOCOL_VERSION
+	AYASAORI.SENDER    = PROTOCOL_SENDER
+}
+
+/**	AYA API unload
+ *	後始末
+ */
+unload
+{
+	ERASEVAR('REQ.HEADER')
+	ERASEVAR('REQ.COMMAND')
+	ERASEVAR('REQ.VERSION')
+	ERASEVAR('REQ.PROTOCOL')
+
+	// デストラクタコール
+	foreach AYASAORI.LOADEDCLS; _cls {
+		_func = "%(_cls).Unload"
+		if ISFUNC(_func) {
+			EVAL(_func)
+		}
+	}
+
+	ERASEVAR('AYASAORI.PATH')
+	ERASEVAR('AYASAORI.SENDER')
+	ERASEVAR('AYASAORI.VERSION')
+	ERASEVAR('AYASAORI.LOADEDCLS')
+}
+
+
+
+/**	AYA API request
+ *	リクエストヘッダを解析し、指定の関数を呼び出して結果をレスポンスヘッダとして返す
+ *
+ *	@param	string	_argv[0] リクエストヘッダ文字列
+ *	@return	string	レスポンスヘッダ文字列
+ */
+request
+{
+	REQ.HEADER = _argv[0]
+	_header    = SPLIT(_argv[0], CRLF)
+
+	// 不正なヘッダ
+	if ARRAYSIZE(_header) <= 1 {
+		AYASAORI.Response('400 Bad Request')
+		return
+	}
+
+	// リクエストラインの分析
+	_requestLine = _header[0]
+	_header[0]   = IARRAY
+	_requestLine = CUTSPACE(_requestLine)
+
+	REQ.COMMAND  = _requestLine[0, ' SAORI']
+	REQ.VERSION  = _requestLine[1, '/']
+	REQ.PROTOCOL = 'SAORI/' + REQ.VERSION
+
+	case REQ.COMMAND {
+	when 'GET Version' {
+		RES.RESULT = GETSETTING('coreinfo.name') + '/' + GETSETTING('coreinfo.version')
+		AYASAORI.Response(STATUS_OK)
+		return
+	}
+	when 'EXECUTE' {
+		foreach _header; _line {
+			if _line == ''
+				break
+			_field = SPLIT(_line, ':', 2)
+			_key   = CUTSPACE(_field[0])
+			_value = CUTSPACE(_field[1])
+
+			// 変数をセットする。大文字で統一
+			// Charset, SecurityLevel, Sender, Argument[0..n] 以外は無いはず
+			_key = TOUPPER(_key)
+			if RE_MATCH(_key, 'CHARSET|SECURITYLEVEL|SENDER|ARGUMENT[0-9]+')
+				LETTONAME("REQ.%(_key)", _value)
+		}
+
+		// ユーザ関数のみ処理対象とする
+		_result = 0
+		if ISFUNC(REQ.ARGUMENT0) == FUNC_USER || ISFUNC(REQ.ARGUMENT0) == FUNC_BUILTIN {
+			// ループ操作の簡易化のために、REQ.ARGS配列を作る
+			REQ.ARGS = IARRAY()
+			// Argument0 はメソッド(または関数名)なので飛ばす
+			_i = 1
+			while ISVAR("REQ.ARGUMENT%(_i)") {
+				REQ.ARGS ,= EVAL("REQ.ARGUMENT%(_i)")
+				_i++
+			}
+
+			// コンストラクタコール
+			if STRSTR(REQ.ARGUMENT0, '.', 0) != -1 {
+				_tmp = SPLIT(REQ.ARGUMENT0, '.', 2)
+				_cls = _tmp[0]
+				_mth = _tmp[1]
+				if _mth == 'Load' {
+					AYASAORI.LOADEDCLS ,= _cls
+				} else {
+					if ASEARCH(_cls, AYASAORI.LOADEDCLS) < 0 {
+						_func = "%(_cls).Load"
+						// モジュールロードの実行
+						if ISFUNC(_func) {
+							void EVAL(_func)
+						}
+						AYASAORI.LOADEDCLS ,= _cls
+					}
+				}
+			}
+
+			// 関数実行
+			if ISFUNC(REQ.ARGUMENT0) == FUNC_BUILTIN
+				_result = EVAL(TOLOWER(REQ.ARGUMENT0))
+			else
+				_result = EVAL(REQ.ARGUMENT0)
+		} else {
+			AYASAORI.Response(STATUS_NO_CONTENT)
+			return
+		}
+
+		if _result == -1 {
+			AYASAORI.Response(STATUS_BAD_REQUEST)
+		} else {
+			// レスポンスの作成
+			AYASAORI.Response(STATUS_OK)
+		}
+		// 変数の後始末
+		ERASEVAR('REQ.SECURITYLEVEL')
+		ERASEVAR('REQ.CHARSET')
+		ERASEVAR('REQ.SENDER')
+		ERASEVAR('REQ.ARGS')
+		_i = 0
+		while ISVAR("REQ.ARGUMENT%(_i)") {
+			ERASEVAR("REQ.ARGUMENT%(_i)")
+			_i++
+		}
+	}
+	// 未知のリクエスト
+	others {
+		AYASAORI.Response(STATUS_BAD_REQUEST)
+		return
+	}
+	}
+}
+
+
+/**	レスポンスヘッダを構築する
+ *
+ *	@param	string   _argv[0] ステータス
+ *	@param	string[] _argv[1] Value[0..n]
+ *	@return	string   レスポンスヘッダ文字列
+ */
+AYASAORI.Response
+{
+	_version  = ''
+	_charset  = ''
+	_sender   = ''
+	_status   = ''
+	if ISVAR('RES.VERSION') {
+		_version = RES.VERSION
+		ERASEVAR('RES.VERSION')
+	} else {
+		_version = AYASAORI.VERSION
+	}
+	if ISVAR('RES.CHARSET') {
+		_charset = RES.CHARSET
+		ERASEVAR('RES.CHARSET')
+	} else {
+		_charset = REQ.CHARSET
+	}
+	void SETSETTING('charset.output', _charset)
+	if ISVAR('RES.SENDER') {
+		_sender = RES.SENDER
+		ERASEVAR('RES.SENDER')
+	} else {
+		_sender = AYASAORI.SENDER
+	}
+	if ISVAR('RES.STATUS') {
+		_status = RES.STATUS
+		ERASEVAR('RES.STATUS')
+	} else {
+		_status = _argv[0]
+	}
+	_response  = ''
+	_response += "SAORI/%(_version) %(_status)" + CRLF
+	_response += "Charset: %(_charset)"         + CRLF
+	_response += "Sender: %(_sender)"           + CRLF
+	if ISVAR('RES.RESULT') {
+		_response += "Result: %(RES.RESULT)" + CRLF
+		ERASEVAR('RES.RESULT')
+	}
+	_i = 0
+	while ISVAR("RES.VALUE%(_i)") {
+		_response += "Value%(_i): " + EVAL("RES.VALUE%(_i)") + CRLF
+		ERASEVAR("RES.VALUE%(_i)")
+		_i++
+	}
+	_response + CRLF
+}

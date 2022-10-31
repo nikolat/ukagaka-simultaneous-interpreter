@@ -1,0 +1,255 @@
+//******************************************************************************
+// load/unload
+//******************************************************************************
+load()
+{
+	_saoriload("saori\httpc\httpc.dll", "httpc");
+	_saoriload("saori\yaya\yaya.dll", "yaya");
+}
+unload()
+{
+	_saoriunload("httpc");
+	_saoriunload("yaya");
+}
+
+//******************************************************************************
+// global variables
+//******************************************************************************
+string translate_ghost = "";
+string translate_source = "ja";
+string translate_target = "en";
+
+//******************************************************************************
+// required event
+//******************************************************************************
+string OnFirstBoot()          { return "\0\s[0]\e"; }
+string OnBoot()               { return "\0\s[0]\e"; }
+string OnGhostChanged()       { return "\0\s[0]\e"; }
+string OnShellChanged()       { return "\0\s[0]\e"; }
+string OnWindowStateRestore() { return "\0\s[0]\e"; }
+string OnSurfaceRestore()     { return ""; }
+string OnClose()              { return "\-\e"; }
+
+//******************************************************************************
+// update event
+//******************************************************************************
+string OnUpdateBegin()            { return "\0\_qUpdate Begin.\e"; }
+string OnUpdateReady()            { return "\0\_qUpdating...\e"; }
+string OnUpdateComplete(dict ref) { return "\0\_q" + escapeAllTags(ref["Reference0"]) + ".\e"; }
+string OnUpdateFailure(dict ref)  { return "\0\_q" + escapeAllTags(ref["Reference0"]) + ".\e"; }
+
+//******************************************************************************
+// network update
+//******************************************************************************
+string homeurl()    { return "https://raw.githubusercontent.com/nikolat/ukagaka-simultaneous-interpreter/main/"; }
+string useorigin1() { return "1"; }
+
+//******************************************************************************
+// recommend sites
+//******************************************************************************
+string sakura.portalsites()
+{
+	string s = "";
+	s += "Disc-2" + _bytechar(1)
+		+ "http://disc2.s56.xrea.com/" + _bytechar(1)
+		+ "http://disc2.s56.xrea.com/image/disc_2.gif" + _bytechar(1)
+		+ _bytechar(2);
+	return s;
+}
+string sakura.recommendsites()
+{
+	string s = "";
+	s += "GitHub - nikolat/ukagaka-simultaneous-interpreter: Real-time translation ghost" + _bytechar(1)
+		+ "https://github.com/nikolat/ukagaka-simultaneous-interpreter" + _bytechar(1)
+		+ _bytechar(1)
+		+ _bytechar(2);
+	return s;
+}
+
+//******************************************************************************
+// mouse event
+//******************************************************************************
+string OnMouseDoubleClick(dict ref)
+{
+	return Menu_Open() + "\e";
+}
+string Menu_Open()
+{
+	array languages = {"en", "ja", "zh-CN", "zh-TW", "ko", "de", "ru"};//free to add more
+	array fmo = getfmo();
+	array names = {};
+	for (int i = 0; fmo[i] != nil; i++) {
+		if (_strstr(fmo[i], ".name" + _bytechar(1)) == -1)
+			continue;
+		string name = _strsplit(fmo[i], ".name" + _bytechar(1))[1];
+		if (name == _systemdict["OnNotifySelfInfo"]["Reference1"])
+			continue;
+		names += name;
+	}
+	string s = "";
+	s += "========================================\n";
+	s += "ghost: " + escapeAllTags(translate_ghost) + "\n\n";
+	for (int i = 0; names[i] != nil; i++) {
+		if (names[i] == translate_ghost)
+			s += "\![*]\f[color,disable]" + escapeAllTags(names[i]) + "\f[color,default]\n";
+		else
+			s += "\![*]\__q[SelectGhost," + escapeText(names[i]) + "]" + escapeAllTags(names[i]) + "\__q\n";
+	}
+	s += "\n\![*]\__q[SelectGhost,]clear\__q\n\n";
+	s += "========================================\n";
+	s += "source: " + translate_source + "\n\n";
+	for (int i = 0; languages[i] != nil; i++) {
+		if (languages[i] == translate_source)
+			s += "\![*]\f[color,disable]" + languages[i] + "\f[color,default] ";
+		else
+			s += "\![*]\__q[SelectSource," + languages[i] + "]" + languages[i] + "\__q ";
+	}
+	s += "\n\n";
+	s += "========================================\n";
+	s += "target: " + translate_target + "\n\n";
+	for (int i = 0; languages[i] != nil; i++) {
+		if (languages[i] == translate_target)
+			s += "\![*]\f[color,disable]" + languages[i] + "\f[color,default] ";
+		else
+			s += "\![*]\__q[SelectTarget," + languages[i] + "]" + languages[i] + "\__q ";
+	}
+	s += "\n\n";
+	s += "========================================\n";
+	s += "\![*]\__q[Menu_CANCEL]close\__q";
+	return "\0\b[2]\_q" + s;
+}
+string SelectGhost(dict ref)
+{
+	string ghost = ref["Reference2"];
+	translate_ghost = ghost;
+	return "\![set,otherghosttalk," + GetOtherghosttalkValue() + "]" + Menu_Open() + "\e";
+}
+string SelectSource(dict ref)
+{
+	string source = ref["Reference2"];
+	translate_source = source;
+	return "\![set,otherghosttalk," + GetOtherghosttalkValue() + "]" + Menu_Open() + "\e";
+}
+string SelectTarget(dict ref)
+{
+	string target = ref["Reference2"];
+	translate_target = target;
+	return "\![set,otherghosttalk," + GetOtherghosttalkValue() + "]" + Menu_Open() + "\e";
+}
+string Menu_CANCEL(dict ref)
+{
+	return "\e";
+}
+string GetOtherghosttalkValue()
+{
+	if (translate_ghost != "" && translate_source != translate_target)
+		return "before";
+	return "false";
+}
+
+//******************************************************************************
+// hook event
+//******************************************************************************
+string OnOtherGhostTalk(dict ref)
+{
+	string ghost = ref["Reference1"];
+	if (translate_ghost != ghost)
+		return "";
+	string talk = ref["Reference4"];
+	talk = _regex_replace(talk, "\\\\_{0,2}[a-zA-Z0-9*!&\\-+](\\d|\\[(\"([^\"]|\\\\\")+?\"|([^\\]]|\\\\\\])+?)+?\\])?", "");
+	if (talk == "")
+		return "";
+	_create_thread("TH_Translate", talk);
+	return "";
+}
+TH_Translate(string talk)
+{
+	//https://qiita.com/satto_sann/items/be4177360a0bc3691fdf
+	string baseurl = "https://script.google.com/macros/s/AKfycbzZtvOvf14TaMdRIYzocRcf3mktzGgXvlFvyczo/";
+	string url = baseurl + "exec?text=" + _urlencode(talk, "utf8") + "&source=" + translate_source + "&target=" + translate_target;
+	array a = httpget(url, "utf8");
+	if (_aryvn(a) == 0)
+		return;
+	dict d = _json2azv(a);
+	if (d["code"] != "200")
+		return;
+	string s = d["text"];
+	_speak("\0" + escapeAllTags(s));
+}
+
+//******************************************************************************
+// UI event
+//******************************************************************************
+string OnKeyPress(dict ref)
+{
+	return _fncstr("key_" + ref["Reference0"], ref);
+}
+string key_r(dict ref)
+{
+	return "\![reload,shiori]\0\_qReloaded.\e";
+}
+string OnChoiceSelect(dict ref)
+{
+	return _fncstr(ref["Reference0"], ref);
+}
+string OnChoiceSelectEx(dict ref)
+{
+	return _fncstr(ref["Reference1"], ref);
+}
+
+//******************************************************************************
+// Utility
+//******************************************************************************
+int ASEARCH(string key, array ary)
+{
+	for (int i = 0; ary[i] != nil; i++)
+	{
+		if (key == ary[i])
+			return i;
+	}
+	return -1;
+}
+string escapeText(string s)
+{
+	if (_regex_match(s, "^.*[\"\\[\\],].*$")) {
+		return "\"" + _strreplace(s, "\"", "\"\"") + "\"";
+	}
+	return s;
+}
+string escapeAllTags(string s)
+{
+	string ESCAPE_TAG_1 = _bytechar(3) + _bytechar(3);
+	string ESCAPE_TAG_2 = _bytechar(4) + _bytechar(4);
+	s = _strreplace(s, "\\\\", ESCAPE_TAG_1);
+	s = _strreplace(s, "\\%", ESCAPE_TAG_2);
+	s = _strreplace(s, "\\", "\\\\");
+	s = _strreplace(s, "%", "\\%");
+	s = _strreplace(s, ESCAPE_TAG_2, "\\%");
+	s = _strreplace(s, ESCAPE_TAG_1, "\\\\");
+	return s;
+}
+
+//******************************************************************************
+// SAORI
+//******************************************************************************
+array httpget(string url, string charset)
+{
+	if (!(int)_saorirequest("httpc")["Result"])
+		return {};
+	string filename = "tmp.txt";
+	string path = "saori\httpc\\" + filename;
+	dict d = _saorirequest("httpc", url, filename);
+	array a = _readtext(path, charset);
+	int n = _fdelete(path);
+	return a;
+}
+array getfmo()
+{
+	string fmoname = "SakuraUnicode";
+	string charset = "UTF-8";
+	string path = _abspath("saori\yaya\tmp.txt");
+	dict d = _saorirequest("yaya", "SaveFMO", fmoname, charset, path);
+	array a = _readtext(path, "utf8");
+	int n = _fdelete(path);
+	return a;
+}
