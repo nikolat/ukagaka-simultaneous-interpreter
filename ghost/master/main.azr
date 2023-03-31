@@ -22,6 +22,14 @@ array _customrequest(dict ref)
 		ar += "";
 		return ar;
 	}
+	// 未知のリクエスト
+	if (_strstr(ref["head"], "NOTIFY") == -1 && _strstr(ref["head"], "GET") == -1) {
+		ar += "SHIORI/3.0 400 Bad Request";
+		ar += "Sender: akari";
+		ar += "Charset: UTF-8";
+		ar += "";
+		return ar;
+	}
 	// セキュリティレベル="external"なら即返る
 	if (ref["SecurityLevel"] == "external") {
 		ar += "SHIORI/3.0 204 No Content";
@@ -34,7 +42,7 @@ array _customrequest(dict ref)
 	if (s == "") s = _fncstr(ref["ID"], ref);
 	// NOTIFY
 	if (_strstr(ref["head"], "NOTIFY") != -1) {
-		ar += "SHIORI/3.0 200 OK";
+		ar += "SHIORI/3.0 204 No Content";
 		ar += "Sender: akari";
 		ar += "Charset: UTF-8";
 		ar += "";
@@ -42,27 +50,17 @@ array _customrequest(dict ref)
 	}
 	// GET
 	if (_strstr(ref["head"], "GET") != -1) {
-		if (s == "")
-		{
+		if (s == "") {
 			ar += "SHIORI/3.0 204 No Content";
 			ar += "Sender: akari";
 			ar += "Charset: UTF-8";
 		}
-		else
-		{
+		else {
 			ar += "SHIORI/3.0 200 OK";
 			ar += "Sender: akari";
 			ar += "Charset: UTF-8";
 			ar += "Value: " + s;
 		}
-		ar += "";
-		return ar;
-	}
-	// 未知のリクエスト
-	else {
-		ar += "SHIORI/3.0 400 Bad Request";
-		ar += "Sender: akari";
-		ar += "Charset: UTF-8";
 		ar += "";
 		return ar;
 	}
