@@ -218,16 +218,13 @@ string OnOtherGhostTalk(dict ref)
 }
 TH_Translate(string talk)
 {
-	//https://qiita.com/satto_sann/items/be4177360a0bc3691fdf
-	string baseurl = "https://script.google.com/macros/s/AKfycbzZtvOvf14TaMdRIYzocRcf3mktzGgXvlFvyczo/";
+	//https://qiita.com/tanabee/items/c79c5c28ba0537112922
+	string baseurl = "https://script.google.com/macros/s/AKfycbweJFfBqKUs5gGNnkV2xwTZtZPptI6ebEhcCU2_JvOmHwM2TCk/";
 	string url = baseurl + "exec?text=" + _urlencode(talk, "utf8") + "&source=" + translate_source + "&target=" + translate_target;
 	array a = httpget(url, "utf8");
 	if (_aryvn(a) == 0)
 		return;
-	dict d = _json2azv(a);
-	if (d["code"] != "200")
-		return;
-	string s = d["text"];
+	string s = a[0];
 	_speak("\0" + escapeAllTags(s));
 }
 
