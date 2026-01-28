@@ -300,6 +300,10 @@ array getfmo()
 	string charset = "UTF-8";
 	string path = _abspath("saori\yaya\tmp.txt");
 	dict d = _saorirequest("yaya", "SaveFMO", fmoname, charset, path);
+	//retry
+	if (!_isfile(path)) {
+		d = _saorirequest("yaya", "SaveFMO", fmoname, charset, path);
+	}
 	array a = _readtext(path, "utf8");
 	int n = _fdelete(path);
 	return a;
