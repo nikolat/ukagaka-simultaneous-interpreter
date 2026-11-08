@@ -219,7 +219,7 @@ string OnOtherGhostTalk(dict ref)
 TH_Translate(string talk)
 {
 	//https://qiita.com/tanabee/items/c79c5c28ba0537112922
-	string baseurl = "https://script.google.com/macros/s/AKfycbweJFfBqKUs5gGNnkV2xwTZtZPptI6ebEhcCU2_JvOmHwM2TCk/";
+	string baseurl = "https://script.google.com/macros/s/AKfycbxFmyGP9AzzRtk4uzK_XcQ_IHTCyTuvQ68HK_eovooi2yUhyiBuXCoUuIFbNzqzAIYP/";
 	string url = baseurl + "exec?text=" + _urlencode(talk, "utf8") + "&source=" + translate_source + "&target=" + translate_target;
 	array a = httpget(url, "utf8");
 	if (_aryvn(a) == 0)
